@@ -41,12 +41,13 @@ class BucketListViewController: UITableViewController, AddItemViewControllerDele
     
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "AddItemSegue"{
+        print(sender.self ?? "---")
+        if sender is UIBarButtonItem{
             let navigationController = segue.destination as! UINavigationController
             let addItemTableViewController = navigationController.topViewController as! AddItemTableViewController
             addItemTableViewController.delegate = self
         }
-        else if segue.identifier == "EditItemSegue"{
+        else if sender is NSIndexPath{
             let navigationController = segue.destination as! UINavigationController
             let addItemTableViewController = navigationController.topViewController as! AddItemTableViewController
             addItemTableViewController.delegate = self
