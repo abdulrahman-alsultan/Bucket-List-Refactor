@@ -6,14 +6,32 @@
 //
 
 import UIKit
+import CoreData
+
+
 
 class BucketListViewController: UITableViewController, AddItemViewControllerDelegate {
         
     
-    var items = ["adwei", "eefoi", "fiorfn", " urogr"]
+    var items = [BucketListItem]()
+    
+    let manageObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
+    func fetchAllItems(){
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "BucketListItem")
+        
+        do{
+            let result = try manageObjectContext.fetch(request)
+            items = result as! [BucketListItem]
+        }catch{
+            print("Something went wrong")
+        }
+        
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        fetchAllItems()
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -23,7 +41,7 @@ class BucketListViewController: UITableViewController, AddItemViewControllerDele
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "LLostItemCell", for: indexPath)
         
-        cell.textLabel?.text = items[indexPath.row]
+        cell.textLabel?.text = items[indexPath.row].text!
         
         return cell
     }
@@ -32,16 +50,10 @@ class BucketListViewController: UITableViewController, AddItemViewControllerDele
         performSegue(withIdentifier: "EditItemSegue", sender: indexPath)
     }
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        
-        items.remove(at: indexPath.row)
-        tableView.reloadData()
-        
-    }
+    
     
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        print(sender.self ?? "---")
         if sender is UIBarButtonItem{
             let navigationController = segue.destination as! UINavigationController
             let addItemTableViewController = navigationController.topViewController as! AddItemTableViewController
@@ -54,7 +66,7 @@ class BucketListViewController: UITableViewController, AddItemViewControllerDele
             
             let indexPath = sender as! NSIndexPath
             
-            addItemTableViewController.item = items[indexPath.row]
+            addItemTableViewController.item = items[indexPath.row].text!
             addItemTableViewController.indexPath = indexPath
         }
     }
@@ -65,15 +77,23 @@ class BucketListViewController: UITableViewController, AddItemViewControllerDele
     
     func itemSaved(by controller: AddItemTableViewController, with text: String, at indexPath: NSIndexPath?) {
         if let ip = indexPath{
-            items[ip.row] = text
-            tableView.reloadData()
-            dismiss(animated: true, completion: nil)
+            let item = items[ip.row]
+            item.text = text
         }
         else{
-            items.append(text)
-            tableView.reloadData()
-            dismiss(animated: true, completion: nil)
+            let item = NSEntityDescription.insertNewObject(forEntityName: "BucketListItem", into: manageObjectContext) as! BucketListItem
+            item.text = text
+            items.append(item)
         }
+        
+        do{
+            try manageObjectContext.save()
+        }catch{
+            print("\(error)")
+        }
+        
+        tableView.reloadData()
+        dismiss(animated: true, completion: nil)
     }
 
 }
